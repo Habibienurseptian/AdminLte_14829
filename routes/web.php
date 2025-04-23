@@ -21,12 +21,29 @@ Route::get('/pasien', [HomeController::class, 'pasien'])->name('pasien');
 
 // Group dokter
 Route::prefix('dokter')->middleware('auth')->group(function () {
-    Route::resource('periksa', PeriksaController::class);
+    Route::resource('periksa', PeriksaController::class)->names([
+        'index' => 'dokter.periksa.index',
+        'create' => 'dokter.periksa.create',
+        'store' => 'dokter.periksa.store',
+        'show' => 'dokter.periksa.show',
+        'edit' => 'dokter.periksa.edit',
+        'update' => 'dokter.periksa.update',
+        'destroy' => 'dokter.periksa.destroy',
+    ]);
     Route::resource('obat', ObatController::class);
 });
 
 // Group pasien
 Route::prefix('pasien')->middleware('auth')->group(function () {
-    Route::resource('periksa', PeriksaController::class);
-    Route::resource('riwayat', DetailPeriksaController::class);
+    Route::resource('periksa', PeriksaController::class)->names([
+        'index' => 'pasien.periksa.index',
+        'create' => 'pasien.periksa.create',
+        'store' => 'pasien.periksa.store',
+        'show' => 'pasien.periksa.show',
+        'edit' => 'pasien.periksa.edit',
+        'update' => 'pasien.periksa.update',
+        'destroy' => 'pasien.periksa.destroy',
+    ]);
+    Route::get('/riwayat', [PeriksaController::class, 'riwayat'])->name('pasien.riwayat');
+    Route::get('/periksa/create', [PeriksaController::class, 'create'])->name('pasien.periksa.create');
 });

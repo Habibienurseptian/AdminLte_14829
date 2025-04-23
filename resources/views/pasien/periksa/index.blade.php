@@ -8,13 +8,8 @@
 <div class="card">
     <div class="card-header">Form Periksa</div>
     <div class="card-body">
-        <form action="{{ route('periksa.store') }}" method="POST">
+        <form action="{{ route('pasien.periksa.store') }}" method="POST">
             @csrf
-
-            <div class="form-group mb-3">
-                <label for="nama">Nama Pasien</label>
-                <input type="text" name="nama" id="nama" class="form-control" required>
-            </div>
 
             <div class="form-group mb-3">
                 <label for="dokter_id">Pilih Dokter</label>
