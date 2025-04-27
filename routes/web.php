@@ -6,6 +6,7 @@ use App\Http\Controllers\PeriksaController;
 use App\Http\Controllers\ObatController;
 use App\Http\Controllers\DetailPeriksaController;
 
+
 Route::get('/', function () {
     return view('welcome');
 });
@@ -16,11 +17,11 @@ Auth::routes();
 Route::get('/home', [HomeController::class, 'index'])->name('home');
 
 // Rute dashboard dokter & pasien
-Route::get('/dokter', [HomeController::class, 'dokter'])->name('dokter');
-Route::get('/pasien', [HomeController::class, 'pasien'])->name('pasien');
+Route::get('/dokter', [HomeController::class, 'dokter'])->middleware(['auth', 'role:dokter'])->name('dokter');
+Route::get('/pasien', [HomeController::class, 'pasien'])->middleware(['auth', 'role:pasien'])->name('pasien');
 
 // Group dokter
-Route::prefix('dokter')->middleware('auth')->group(function () {
+Route::prefix('dokter')->middleware('auth', 'role:dokter')->group(function () {
     Route::resource('periksa', PeriksaController::class)->names([
         'index' => 'dokter.periksa.index',
         'create' => 'dokter.periksa.create',
@@ -34,7 +35,7 @@ Route::prefix('dokter')->middleware('auth')->group(function () {
 });
 
 // Group pasien
-Route::prefix('pasien')->middleware('auth')->group(function () {
+Route::prefix('pasien')->middleware('auth', 'role:pasien')->group(function () {
     Route::resource('periksa', PeriksaController::class)->names([
         'index' => 'pasien.periksa.index',
         'create' => 'pasien.periksa.create',

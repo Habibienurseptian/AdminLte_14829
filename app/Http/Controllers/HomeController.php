@@ -20,14 +20,15 @@ class HomeController extends Controller
      */
     public function index()
     {
-        $user = Auth::user();
+        $user = auth()->user();
 
-        if ($user->role === 'dokter') {
+        if ($user->role == 'dokter') {
             return redirect()->route('dokter');
-        } elseif ($user->role === 'pasien') {
+        } elseif ($user->role == 'pasien') {
             return redirect()->route('pasien');
+        } else {
+            abort(403, 'Kamu tidak dapat mengakses halaman ini');
         }
-        return view('home');
     }
 
     /**
