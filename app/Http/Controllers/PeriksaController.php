@@ -3,114 +3,123 @@
 namespace App\Http\Controllers;
 
 use App\Models\Periksa;
-use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Obat;
+use App\Models\Dokter;
+use App\Models\JadwalDokter; 
+use Illuminate\Http\Request;
 use Carbon\Carbon;
 
 class PeriksaController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        if (auth()->user()->role === 'dokter') {
-            $listPeriksa = Periksa::with('pasien')
-                ->where('dokter_id', auth()->id())
+        $user = auth()->user();
+
+        if ($user->role === 'dokter') {
+            $listPeriksa = Periksa::with(['pasien', 'obats'])
+                ->where('dokter_id', $user->id)
+                ->where('status', 'belum')
                 ->orderBy('tgl_periksa', 'desc')
                 ->get();
 
             return view('dokter.periksa.index', compact('listPeriksa'));
 
-        } elseif (auth()->user()->role === 'pasien') {
-            $dokterList = User::where('role', 'dokter')->get();
-            return view('pasien.periksa.index', compact('dokterList'));
+        } elseif ($user->role === 'pasien') {
+            $dokterList = Dokter::with(['user', 'poli'])->get();
+
+            $jadwalData = \App\Models\JadwalDokter::all()->groupBy('dokter_id');
+            $jadwalPraktik = [];
+
+            foreach ($jadwalData as $dokterId => $jadwals) {
+                $jadwalPraktik[$dokterId] = $jadwals->map(function ($j) {
+                    return [
+                        'tanggal' => $j->tanggal,
+                        'jam' => $j->jam
+                    ];
+                });
+            }
+
+            return view('pasien.periksa.index', compact('dokterList', 'jadwalPraktik'));
+        }
+
+        elseif ($user->role === 'admin') {
+            $listPeriksa = Periksa::with(['pasien', 'dokter'])->latest()->get();
+            return view('admin.poli.index', compact('listPeriksa'));
         }
 
         abort(403, 'Role tidak dikenali');
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        $dokterList = User::where('role', 'dokter')->get();
-        return view('pasien.periksa.index', compact('dokterList'));
+        $dokterList = Dokter::with(['user', 'poli'])->get();
+
+        // Perbaikan: Konversi ke array agar bisa digunakan di JS
+        $jadwalPraktik = JadwalDokter::all()
+            ->groupBy('dokter_id')
+            ->map(function ($jadwals) {
+                return $jadwals->map(function ($j) {
+                    return [
+                        'tanggal' => $j->tanggal,
+                        'jam' => $j->jam,
+                    ];
+                });
+            })
+            ->toArray(); // <<< penting agar bisa diubah ke JSON
+
+        return view('pasien.periksa.create', compact('dokterList', 'jadwalPraktik'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $request->validate([
             'dokter_id' => 'required|exists:users,id',
-            'keluhan' => 'required|string',
+            'catatan' => 'required|string|max:255',
             'tanggal' => 'required|date',
         ]);
 
-        $pasien = auth()->user();
-        $tanggal = Carbon::parse($request->tanggal);
-
         Periksa::create([
-            'id_pasien' => $pasien->id,
+            'id_pasien' => auth()->id(),
             'dokter_id' => $request->dokter_id,
-            'tgl_periksa' => $request->tanggal,
-            'catatan' => $request->keluhan,
+            'tgl_periksa' => Carbon::parse($request->tanggal),
+            'catatan' => $request->catatan,
             'biaya_periksa' => 0,
+            'status' => 'belum',
         ]);
 
         return redirect()->route('pasien.periksa.index')->with('success', 'Data periksa berhasil ditambahkan.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Periksa $periksa)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit($id)
     {
-        $periksa = Periksa::findOrFail($id);
+        $periksa = Periksa::with('obats')->findOrFail($id);
         $dokterList = User::where('role', 'dokter')->get();
-        $obatList = \App\Models\Obat::all();
+        $obatList = Obat::all();
 
         return view('dokter.periksa.edit', compact('periksa', 'dokterList', 'obatList'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, $id)
     {
-        $request->validate([
-            'dokter_id' => 'required|exists:users,id',
-            'keluhan' => 'required|string',
-            'tanggal' => 'required|date',
-        ]);
-
         $periksa = Periksa::findOrFail($id);
-        $periksa->update([
-            'dokter_id' => $request->dokter_id,
-            'tgl_periksa' => $request->tanggal,
-            'catatan' => $request->keluhan,
-            'biaya_periksa' => $request->biaya_periksa ?? $periksa->biaya_periksa,
+
+        $request->validate([
+            'obat_id' => 'nullable|array',
+            'obat_id.*' => 'exists:obats,id',
+            'biaya_periksa' => 'nullable|numeric',
         ]);
 
-        $periksa->obats()->sync($request->obat_id); 
+        $periksa->update([
+            'biaya_periksa' => $request->biaya_periksa ?? 0,
+        ]);
+
+        // Sinkronisasi obat
+        $periksa->obats()->sync($request->obat_id ?? []);
 
         return redirect()->route('dokter.periksa.index')->with('success', 'Data periksa berhasil diperbarui.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy($id)
     {
         $periksa = Periksa::findOrFail($id);
@@ -121,12 +130,70 @@ class PeriksaController extends Controller
 
     public function riwayat()
     {
-        // Ambil data pemeriksaan pasien yang sedang login
         $riwayatPeriksa = Periksa::with('dokter')
             ->where('id_pasien', auth()->id())
-            ->orderBy('tgl_periksa', 'desc')
+            ->where('status', 'selesai')
+            ->orderByDesc('tgl_periksa')
             ->get();
 
         return view('pasien.riwayat.index', compact('riwayatPeriksa'));
     }
+
+    public function riwayatDokter()
+    {
+        $listPeriksa = Periksa::with(['pasien', 'obats'])
+            ->where('dokter_id', auth()->id())
+            ->where('status', 'selesai')
+            ->orderByDesc('tgl_periksa')
+            ->get();
+
+        return view('dokter.riwayat.index', compact('listPeriksa'));
+    }
+
+    public function selesai($id)
+    {
+        $periksa = \App\Models\Periksa::with('obats')->findOrFail($id);
+
+        // Validasi: harus sudah ada obat
+        if ($periksa->obats->isEmpty()) {
+            return redirect()->back()->with('error', 'Pasien harus diberi obat sebelum periksa dapat diselesaikan.');
+        }
+
+        // Validasi: biaya periksa harus lebih dari 0
+        if ($periksa->biaya_periksa == 0 || $periksa->biaya_periksa === null) {
+            return redirect()->back()->with('error', 'Biaya periksa harus diisi sebelum periksa diselesaikan.');
+        }
+
+        // Jika valid, ubah status jadi selesai
+        $periksa->status = 'selesai';
+        $periksa->save();
+
+        return redirect()->route('dokter.periksa.index')->with('success', 'Periksa telah diselesaikan dan masuk ke riwayat.');
+    }
+
+    
+    public function jadwal()
+    {
+        $dokterId = auth()->id();
+
+        $jadwalPeriksa = Periksa::with('pasien')
+            ->where('dokter_id', $dokterId)
+            ->whereDate('tgl_periksa', '>=', now()->toDateString()) // Tampilkan jadwal hari ini & mendatang
+            ->orderBy('tgl_periksa')
+            ->get();
+
+        return view('dokter.jadwal.index', compact('jadwalPeriksa'));
+    }
+
+    public function showRiwayat($id)
+    {
+        $periksa = \App\Models\Periksa::with(['dokter', 'obats'])
+            ->where('id', $id)
+            ->where('id_pasien', auth()->id()) // agar pasien hanya lihat miliknya
+            ->firstOrFail();
+
+        return view('pasien.riwayat.show', compact('periksa'));
+    }
+
+
 }

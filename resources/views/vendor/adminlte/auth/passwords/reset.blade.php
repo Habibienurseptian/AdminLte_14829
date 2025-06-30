@@ -1,5 +1,11 @@
 @extends('adminlte::auth.auth-page', ['authType' => 'login'])
 
+@section('title', 'Poliklinik')
+
+@section('css')
+    <link rel="icon" type="image/png" href="{{ asset('image.png') }}">
+@endsection
+
 @php
     $passResetUrl = View::getSection('password_reset_url') ?? config('adminlte.password_reset_url', 'password/reset');
 

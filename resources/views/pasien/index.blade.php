@@ -1,95 +1,39 @@
 @extends('layouts.app')
 
-
-{{-- Customize layout sections --}}
+@section('content_header')
+    <h1>Dashboard Pasien</h1>
+@stop
 
 @section('content')
-<div class="card mt-4">
-    <div class="card-header">
-        <h3 class="card-title">Selamat Datang, {{ Auth::user()->name }}.</h3>
-    </div>
-    <div class="card-body">
-        <p>Jika ada keluhan bisa daftarkan diri anda di layanan periksa.</p>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-lg-3 col-6">
-        <!-- small box -->
+<div class="row mt-3">
+    <div class="col-lg-6 col-12">
         <div class="small-box bg-info">
             <div class="inner">
-                <h3>150</h3>
-                <p>Jumlah Riwayat Periksa</p>
+                <h3>{{ $jumlahPeriksa }}</h3>
+                <p>Total Pemeriksaan</p>
             </div>
             <div class="icon">
-                <i class="fas fa-shopping-cart"></i>
+                <i class="fas fa-file-medical-alt"></i>
             </div>
-            <a href="#" class="small-box-footer">
-                More info <i class="fas fa-arrow-circle-right"></i>
+            <a href="{{ route('pasien.riwayat') }}" class="small-box-footer">
+                Lihat Riwayat <i class="fas fa-arrow-circle-right"></i>
             </a>
         </div>
     </div>
 
-    <div class="col-lg-3 col-6">
-        <!-- small box -->
+    <div class="col-lg-6 col-12">
         <div class="small-box bg-success">
             <div class="inner">
-                <h3>53<sup style="font-size: 20px">%</sup></h3>
-                <p>Bounce Rate</p>
+                <h3>+</h3>
+                <p>Periksa Sekarang</p>
             </div>
             <div class="icon">
-                <i class="fas fa-chart-line"></i>
+                <i class="fas fa-notes-medical"></i>
             </div>
-            <a href="#" class="small-box-footer">
-                More info <i class="fas fa-arrow-circle-right"></i>
-            </a>
-        </div>
-    </div>
-
-    <div class="col-lg-3 col-6">
-        <!-- small box -->
-        <div class="small-box bg-warning">
-            <div class="inner">
-                <h3>44</h3>
-                <p>User Registrations</p>
-            </div>
-            <div class="icon">
-                <i class="fas fa-user-plus"></i>
-            </div>
-            <a href="#" class="small-box-footer">
-                More info <i class="fas fa-arrow-circle-right"></i>
-            </a>
-        </div>
-    </div>
-
-    <div class="col-lg-3 col-6">
-        <!-- small box -->
-        <div class="small-box bg-danger">
-            <div class="inner">
-                <h3>65</h3>
-                <p>Unique Visitors</p>
-            </div>
-            <div class="icon">
-                <i class="fas fa-users"></i>
-            </div>
-            <a href="#" class="small-box-footer">
-                More info <i class="fas fa-arrow-circle-right"></i>
+            <a href="{{ route('pasien.periksa.create') }}" class="small-box-footer">
+                Daftar Periksa <i class="fas fa-arrow-circle-right"></i>
             </a>
         </div>
     </div>
 </div>
-@stop
-
-@section('css')
-    <style>
-        .small-box .icon {
-            top: 10px;
-        }
-    </style>
-@stop
-
-@section('js')
-    <script>
-        console.log("Hi, I'm using the Laravel-AdminLTE package!");
-    </script>
 @stop

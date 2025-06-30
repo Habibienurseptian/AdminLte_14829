@@ -2,30 +2,31 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use App\Models\Obat;
 use Illuminate\Http\Request;
 
 class ObatController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Tampilkan daftar semua obat.
      */
     public function index()
     {
-        $obats = Obat::all(); // ambil semua data obat dari database
-        return view('/dokter/obat.index', compact('obats')); // kirim ke view
+        $obats = Obat::all();
+        return view('admin.obat.index', compact('obats'));
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Tampilkan form untuk membuat obat baru.
      */
     public function create()
     {
-        //
+        return view('admin.obat.create');
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Simpan data obat baru.
      */
     public function store(Request $request)
     {
@@ -34,30 +35,30 @@ class ObatController extends Controller
             'kemasan' => 'required|string|max:255',
             'harga' => 'required|numeric|min:0',
         ]);
-    
-        Obat::create($request->all());
+
+        Obat::create($request->only('nama_obat', 'kemasan', 'harga'));
         return redirect()->route('obat.index')->with('success', 'Obat berhasil ditambahkan.');
     }
 
     /**
-     * Display the specified resource.
+     * Tampilkan detail obat tertentu.
      */
     public function show(Obat $obat)
     {
-        //
+        return view('admin.obat.show', compact('obat'));
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Tampilkan form edit obat.
      */
     public function edit($id)
     {
         $obat = Obat::findOrFail($id);
-        return view('dokter.obat.edit', compact('obat'));
+        return view('admin.obat.edit', compact('obat'));
     }
 
     /**
-     * Update the specified resource in storage.
+     * Simpan perubahan data obat.
      */
     public function update(Request $request, $id)
     {
@@ -74,7 +75,7 @@ class ObatController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Hapus data obat.
      */
     public function destroy($id)
     {

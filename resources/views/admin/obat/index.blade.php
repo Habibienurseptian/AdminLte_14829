@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content_header')
-    <h1>Obat</h1>
+    <h1>Daftar Obat</h1>
 @stop
 
 @section('content')
@@ -19,7 +19,7 @@
         </div>
         <div class="card-body">
             <table class="table table-bordered table-striped">
-                <thead>
+                <thead class="table-primary">
                     <tr>
                         <th>ID</th>
                         <th>Nama Obat</th>

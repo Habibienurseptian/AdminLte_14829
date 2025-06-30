@@ -8,33 +8,28 @@
 <div class="card">
     <div class="card-header">Riwayat Pemeriksaan</div>
     <div class="card-body">
-        <table class="table">
-            <thead>
+        <table class="table table-bordered table-striped">
+            <thead class="table-primary">
                 <tr>
-                    <th scope="col">No.</th>
-                    <th scope="col">ID Periksa</th>
-                    <th scope="col">Dokter</th>
-                    <th scope="col">Tanggal Periksa</th>
-                    <th scope="col">Catatan</th>
-                    <th scope="col">Obat</th>
-                    <th scope="col">Biaya Periksa</th>
+                    <th>No.</th>
+                    <th>Nama Dokter</th>
+                    <th>Email Dokter</th>
+                    <th>Tanggal Periksa</th>
+                    <th>Aksi</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($riwayatPeriksa as $index => $periksa)
                     <tr>
-                        <th scope="row">{{ $index + 1 }}</th>
-                        <td>{{ $periksa->id }}</td>
-                        <td>{{ $periksa->dokter->name }}</td>
+                        <td>{{ $index + 1 }}</td>
+                        <td>{{ $periksa->dokter->name ?? '-' }}</td>
+                        <td>{{ $periksa->dokter->email ?? '-' }}</td>
                         <td>{{ $periksa->tgl_periksa->format('d-m-Y') }}</td>
-                        <td>{{ $periksa->catatan }}</td>
                         <td>
-                            <!-- Obat dapat diambil dari relasi lain jika ada, misalnya tabel obat -->
-                            @foreach($periksa->obats as $obat)
-                                <li>{{ $obat->nama_obat }}</li>
-                            @endforeach
+                            <a href="{{ route('pasien.riwayat.show', $periksa->id) }}" class="btn btn-sm btn-info">
+                                Detail
+                            </a>
                         </td>
-                        <td>{{ number_format($periksa->biaya_periksa, 0, ',', '.') }}</td>
                     </tr>
                 @endforeach
             </tbody>

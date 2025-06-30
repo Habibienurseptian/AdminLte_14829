@@ -1,5 +1,11 @@
 @extends('adminlte::auth.auth-page', ['authType' => 'login'])
 
+@section('title', 'Poliklinik')
+
+@section('css')
+    <link rel="icon" type="image/png" href="{{ asset('image.png') }}">
+@endsection
+
 @section('adminlte_css_pre')
     <link rel="stylesheet" href="{{ asset('vendor/icheck-bootstrap/icheck-bootstrap.min.css') }}">
 @stop
@@ -20,7 +26,14 @@
     }
 @endphp
 
-@section('auth_header', __('adminlte::adminlte.login_message'))
+@section('auth_header')
+    <div class="text-center">
+        <i class="fas fa-clinic-medical fa-2x"></i>
+        <h1 class="h4 mt-2">Poliklinik</h1>
+        <p>{{ __('adminlte::adminlte.login_message') }}</p>
+    </div>
+@stop
+
 
 @section('auth_body')
     <form action="{{ $loginUrl }}" method="post">
@@ -103,3 +116,9 @@
         </p>
     @endif
 @stop
+
+@if ($errors->any())
+    <div class="alert alert-danger">
+        <strong>{{ $errors->first() }}</strong>
+    </div>
+@endif

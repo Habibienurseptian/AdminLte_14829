@@ -4,8 +4,18 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PeriksaController;
 use App\Http\Controllers\ObatController;
-use App\Http\Controllers\DetailPeriksaController;
+use App\Http\Controllers\DokterController;
+use App\Http\Controllers\PasienController;
+use App\Http\Controllers\PoliController;
+use App\Http\Controllers\JadwalPraktikController;
 
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+*/
+
+// =================== LANDING & AUTH ===================
 
 Route::get('/', function () {
     return view('welcome');
@@ -13,38 +23,72 @@ Route::get('/', function () {
 
 Auth::routes();
 
-// Route setelah login
 Route::get('/home', [HomeController::class, 'index'])->name('home');
 
-// Rute dashboard dokter & pasien
-Route::get('/dokter', [HomeController::class, 'dokter'])->middleware(['auth', 'role:dokter'])->name('dokter');
-Route::get('/pasien', [HomeController::class, 'pasien'])->middleware(['auth', 'role:pasien'])->name('pasien');
 
-// Group dokter
-Route::prefix('dokter')->middleware('auth', 'role:dokter')->group(function () {
-    Route::resource('periksa', PeriksaController::class)->names([
-        'index' => 'dokter.periksa.index',
-        'create' => 'dokter.periksa.create',
-        'store' => 'dokter.periksa.store',
-        'show' => 'dokter.periksa.show',
-        'edit' => 'dokter.periksa.edit',
-        'update' => 'dokter.periksa.update',
-        'destroy' => 'dokter.periksa.destroy',
-    ]);
+// =================== ADMIN ===================
+
+Route::prefix('admin')->middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/', [HomeController::class, 'admin'])->name('admin');
+
+    Route::resource('dokter', DokterController::class);
+    Route::resource('pasien', PasienController::class);
+    Route::resource('poli', PoliController::class);
     Route::resource('obat', ObatController::class);
+
+    Route::get('/pasien/{id}', [PasienController::class, 'show'])->name('pasien.show');
 });
 
-// Group pasien
-Route::prefix('pasien')->middleware('auth', 'role:pasien')->group(function () {
+
+// =================== DOKTER ===================
+
+Route::prefix('dokter')->middleware(['auth', 'role:dokter'])->name('dokter.')->group(function () {
+    // Dashboard Dokter
+    Route::get('/', [HomeController::class, 'dokter'])->name('dashboard');
+
+    // Pemeriksaan Pasien
+    Route::resource('periksa', PeriksaController::class)->names('periksa');
+    Route::patch('periksa/{id}/selesai', [PeriksaController::class, 'selesai'])->name('periksa.selesai');
+
+    // Riwayat Pemeriksaan
+    Route::get('/riwayat', [PeriksaController::class, 'riwayatDokter'])->name('riwayat.index');
+
+    // Jadwal Praktik
+    Route::prefix('jadwal')->name('jadwal.')->group(function () {
+        Route::get('/', [JadwalPraktikController::class, 'index'])->name('index');
+        Route::get('/create', [JadwalPraktikController::class, 'create'])->name('create');
+        Route::post('/', [JadwalPraktikController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [JadwalPraktikController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [JadwalPraktikController::class, 'update'])->name('update');
+        Route::delete('/{id}', [JadwalPraktikController::class, 'destroy'])->name('destroy');
+    });
+
+    // Profil Dokter
+    Route::get('/profile', [DokterController::class, 'profile'])->name('profile');
+    Route::put('/profile', [DokterController::class, 'updateProfile'])->name('profile.update');
+});
+
+
+
+// =================== PASIEN ===================
+
+Route::prefix('pasien')->middleware(['auth', 'role:pasien'])->group(function () {
+    Route::get('/', [HomeController::class, 'pasien'])->name('pasien');
+
+    // Pemeriksaan oleh pasien
     Route::resource('periksa', PeriksaController::class)->names([
-        'index' => 'pasien.periksa.index',
-        'create' => 'pasien.periksa.create',
-        'store' => 'pasien.periksa.store',
-        'show' => 'pasien.periksa.show',
-        'edit' => 'pasien.periksa.edit',
-        'update' => 'pasien.periksa.update',
+        'index'   => 'pasien.periksa.index',
+        'create'  => 'pasien.periksa.create',
+        'store'   => 'pasien.periksa.store',
+        'show'    => 'pasien.periksa.show',
+        'edit'    => 'pasien.periksa.edit',
+        'update'  => 'pasien.periksa.update',
         'destroy' => 'pasien.periksa.destroy',
     ]);
+
+    // Riwayat pasien
     Route::get('/riwayat', [PeriksaController::class, 'riwayat'])->name('pasien.riwayat');
-    Route::get('/periksa/create', [PeriksaController::class, 'create'])->name('pasien.periksa.create');
+    Route::get('/pasien/riwayat/{id}', [\App\Http\Controllers\PeriksaController::class, 'showRiwayat'])->name('pasien.riwayat.show');
+    Route::get('/profile', [App\Http\Controllers\PasienController::class, 'profile'])->name('pasien.profile');
+    Route::put('/pasien/profile', [PasienController::class, 'updateProfile'])->name('pasien.profile.update');
 });
